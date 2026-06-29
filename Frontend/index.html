@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Assistant | Professional RAG Chatbot</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <i class="fas fa-brain"></i>
+                <span>AI Assistant</span>
+            </div>
+            <div class="header-actions">
+                <button class="btn-icon" onclick="toggleTheme()" title="Toggle Theme">
+                    <i class="fas fa-moon" id="theme-icon"></i>
+                </button>
+                <button class="btn-icon" onclick="clearChat()" title="Clear Chat">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="main-container">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h3>Chat History</h3>
+                <button class="btn-new-chat" onclick="startNewChat()">
+                    <i class="fas fa-plus"></i>
+                    New Chat
+                </button>
+            </div>
+            <div class="chat-history" id="chatHistory">
+                <div class="history-item active">
+                    <i class="fas fa-message"></i>
+                    <span>Current Conversation</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Chat Area -->
+        <section class="chat-area">
+            <!-- Welcome Screen -->
+            <div class="welcome-screen" id="welcomeScreen">
+                <div class="welcome-content">
+                    <div class="ai-avatar">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <h1>Welcome to AI Assistant</h1>
+                    <p class="subtitle">Powered by Advanced RAG Technology</p>
+                    <div class="features">
+                        <div class="feature">
+                            <i class="fas fa-file-pdf"></i>
+                            <span>PDF Document Analysis</span>
+                        </div>
+                        <div class="feature">
+                            <i class="fas fa-search"></i>
+                            <span>Intelligent Search</span>
+                        </div>
+                        <div class="feature">
+                            <i class="fas fa-bolt"></i>
+                            <span>Real-time Responses</span>
+                        </div>
+                    </div>
+                    <div class="suggested-questions">
+                        <h4>Try asking:</h4>
+                        <div class="suggestion-chips">
+                            <button class="chip" onclick="setQuestion('What is the main topic of this document?')">
+                                What is the main topic?
+                            </button>
+                            <button class="chip" onclick="setQuestion('Summarize the key findings')">
+                                Summarize key findings
+                            </button>
+                            <button class="chip" onclick="setQuestion('What are the important concepts?')">
+                                Important concepts
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat Messages -->
+            <div class="chat-messages" id="chatMessages" style="display: none;">
+                <!-- Messages will be dynamically added here -->
+            </div>
+
+            <!-- Input Area -->
+            <div class="input-area">
+                <div class="input-container">
+                    <div class="input-wrapper">
+                        <textarea 
+                            id="question" 
+                            placeholder="Ask anything about your document..."
+                            rows="1"
+                            onkeydown="handleKeyPress(event)"
+                            oninput="autoResize(this)"
+                        ></textarea>
+                        <div class="input-actions">
+                            <input type="file" id="fileInput" accept=".pdf" style="display: none;" onchange="handleFileUpload(event)">
+                            <button class="btn-icon" onclick="attachFile()" title="Attach File">
+                                <i class="fas fa-paperclip"></i>
+                            </button>
+                            <button class="btn-send" id="sendBtn" onclick="askQuestion()" title="Send Message">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="input-info">
+                        <span class="char-count" id="charCount">0</span>
+                        <span class="info-text">Press Enter to send, Shift+Enter for new line</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay" style="display: none;">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <p>Processing your request...</p>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>
