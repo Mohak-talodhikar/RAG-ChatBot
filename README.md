@@ -169,4 +169,14 @@ http://localhost:3000
 
 >Backend API development with FastAPI
 
+---
 
+## 🤝 Connect with the Developer
+
+Built with precision by **Mohak Talodhikar**.
+
+- **Instagram**: [@mohak_talodhikar](https://www.instagram.com/mohak_talodhikar/)
+- **LinkedIn**: [Mohak Talodhikar](https://www.linkedin.com/in/mohak-talodhikar/)
+- **Github**: [@mohaktalodhikar](https://github.com/mohaktalodhikar)
+
+---
