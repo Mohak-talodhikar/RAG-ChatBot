@@ -127,8 +127,7 @@ pip install -r requirements.txt
 Or manually:
 
 ```bash
-pip install langchain langchain-community langchain-huggingface \
-faiss-cpu transformers sentence-transformers pypdf fastapi uvicorn
+pip install langchain langchain-community langchain-huggingface faiss-cpu transformers sentence-transformers pypdf fastapi uvicorn
 ```
 
 3️⃣ Run Backend (FastAPI)
