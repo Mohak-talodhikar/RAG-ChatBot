@@ -153,6 +153,6 @@ Two main APIs (if you are technical):
 
 **Mohak Talodhikar**
 
-- [LinkedIn]_(https://www.linkedin.com/in/mohak-talodhikar/)
-- [GitHub]_(https://github.com/mohaktalodhikar)
-- [Instagram]_(https://www.instagram.com/mohak_talodhikar/)
+- [LinkedIn](https://www.linkedin.com/in/mohak-talodhikar/)
+- [GitHub](https://github.com/mohaktalodhikar)
+- [Instagram](https://www.instagram.com/mohak_talodhikar/)
