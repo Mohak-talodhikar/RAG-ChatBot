@@ -151,8 +151,8 @@ Two main APIs (if you are technical):
 
 ## Author
 
-Built by **Mohak Talodhikar**
+**Mohak Talodhikar**
 
-- [LinkedIn] (https://www.linkedin.com/in/mohak-talodhikar/)
-- [GitHub] (https://github.com/mohaktalodhikar)
-- [Instagram] (https://www.instagram.com/mohak_talodhikar/)
+- [LinkedIn]_(https://www.linkedin.com/in/mohak-talodhikar/)
+- [GitHub]_(https://github.com/mohaktalodhikar)
+- [Instagram]_(https://www.instagram.com/mohak_talodhikar/)
