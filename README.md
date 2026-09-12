@@ -1,181 +1,158 @@
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 
-# **📘 RAG Chatbot using FAISS & HuggingFace**
+# RAG Chatbot – Ask Questions From Your PDFs
 
-An end-to-end Retrieval-Augmented Generation (RAG) chatbot that processes PDF documents and generates context-aware answers using semantic search and a local HuggingFace LLM.
+**In simple words:** Upload any PDF, ask questions in plain English, and get answers taken only from that PDF — not made up by AI.
 
----
-
-## 👨‍💻 About the Project
-
-This project demonstrates a complete implementation of a RAG pipeline, integrating:
-
->Document processing
-
->Vector embeddings
-
->Similarity search
-
->Large Language Model (LLM) inference
-
-The chatbot answers user queries strictly based on the uploaded PDF content, reducing hallucination and improving factual accuracy.
+This happens using **RAG (Retrieval-Augmented Generation)**. RAG means the AI first *finds* the relevant lines from your document, then *writes* the answer using only those lines. This reduces wrong / made-up answers.
 
 ---
 
-## 🚀 Key Features
+## What can you do with it?
 
-📄 PDF document ingestion
+1. Upload a PDF (resume, report, notes, paper, manual).
+2. Ask a question like “Summarize the key findings” or “What is the main topic?”
+3. Get a short, focused answer based only on that PDF.
 
-✂ Intelligent text chunking
+No API key needed. Everything runs locally on your machine.
 
-🔢 Vector embedding generation
+**Example:**
 
-🗄 FAISS vector storage
-
-🔎 Top-k similarity retrieval
-
-🤖 Context-aware answer generation
-
-🌐 FastAPI backend
-
-💻 Simple frontend interface
+> PDF uploaded: `internship-report.pdf`
+> You ask: “What are the important concepts?”
+> Bot answers: from the report content only. If the answer is not in the PDF, it says so clearly instead of guessing.
 
 ---
 
-## 🧠 System Architecture
+## How it works (in 4 steps)
 
->User Query
+1. **Read PDF** – Extracts text and splits it into small chunks (1000 chars with 200 overlap so context is not lost).
+2. **Understand meaning** – Converts each chunk into a number (embedding) that captures its meaning.
+3. **Find relevant parts** – When you ask a question, finds the top 3 most similar chunks using FAISS (fast similarity search).
+4. **Write answer** – Gives those 3 chunks + your question to a small AI model (FLAN-T5) which writes the final answer.
 
->Retriever (FAISS Similarity Search)
-
->Top-K Relevant Chunks
-
->Prompt Template (Context + Question)
-
->HuggingFace LLM (FLAN-T5)
-
->Final Generated Answer
-
----
-
-## 🛠 Tech Stack
-
->Python
-
->FastAPI
-
->LangChain
-
->FAISS (Vector Database)
-
->Sentence Transformers
-
->HuggingFace Transformers
-
----
-
-## 🤖 Models Used
-
-🔹 Embedding Model
-
->sentence-transformers/all-MiniLM-L6-v2
-
->Used for semantic vector representation of text chunks
-
-🔹 Vector Database
-
->FAISS
-
->Used for similarity search over embeddings
-
-🔹 LLM
-
->google/flan-t5-small
-
->Framework: HuggingFace Transformers
-
->Pipeline Type: text2text-generation
-
->Max New Tokens: 512
-
->Integrated using HuggingFacePipeline
-
-🔹 Why FLAN-T5?
-
->Lightweight and efficient
-
->Suitable for CPU-based inference
-
->Good instruction-following capability
-
----
-
-## ⚙️ Installation & Setup
-
-1️⃣ Clone Repository
-
-```bash
-git clone https://github.com/mohaktalodhikar/RAG_ChatBot.git
-cd RAG-chatbot
+```
+PDF → Chunks → Embeddings → FAISS → Top 3 chunks + Question → FLAN-T5 → Answer
 ```
 
-2️⃣ Install Dependencies
+---
+
+## Key Features
+
+- PDF upload and automatic processing
+- Answers grounded in your document, not AI memory
+- Says “not found in document” instead of hallucinating
+- Simple chat UI with light/dark mode, chat history, and file attach
+- Runs fully offline with free, open-source models
+- FastAPI backend with auto docs at `/docs`
+
+---
+
+## Tech Stack
+
+| What it does | Tool used |
+|---|---|
+| Backend API | Python, FastAPI, Uvicorn |
+| AI flow | LangChain |
+| Search database | FAISS (in-memory vector search) |
+| Understands text meaning | `sentence-transformers/all-MiniLM-L6-v2` |
+| Writes answers | `google/flan-t5-small` via HuggingFace |
+| Reads PDFs | PyPDF |
+| Frontend | HTML, CSS, JavaScript (no build step) |
+
+Why these models? Both are small, free, and run on CPU. No GPU or paid API needed. Good for learning and demos.
+
+---
+
+## Project Structure
+
+```
+RAG-ChatBot/
+├── Backend/
+│   ├── app.py            # API: /upload PDF, /ask question
+│   └── requirements.txt  # Python dependencies
+├── Frontend/
+│   ├── index.html        # Chat UI
+│   ├── script.js         # Upload + chat logic
+│   └── styles.css        # Styling
+├── README.md
+└── LICENSE
+```
+
+You don’t need to open the code to use it. This structure is only if you want to explore or modify it.
+
+---
+
+## How to run locally
+
+**You need:** Python 3.10+, a browser.
+
+**1. Clone and install:**
 
 ```bash
-pip install -r requirements.txt
-```
-Or manually:
-
-```bash
-pip install langchain langchain-community langchain-huggingface faiss-cpu transformers sentence-transformers pypdf fastapi uvicorn
+git clone https://github.com/Mohak-talodhikar/RAG-ChatBot.git
+cd RAG-ChatBot
+pip install -r Backend/requirements.txt
 ```
 
-3️⃣ Run Backend (FastAPI)
+**2. Start backend:**
 
 ```bash
 cd Backend
 uvicorn app:app --reload
 ```
 
-Backend runs at:
+Open: `http://127.0.0.1:8000/docs` to see the API.
 
-http://127.0.0.1:8000/docs
-
-4️⃣ Run Frontend
+**3. Start frontend (new terminal):**
 
 ```bash
-cd frontend
+cd Frontend
 python -m http.server 3000
 ```
 
-Open in browser:
-
-http://localhost:3000
+Open: `http://localhost:3000`
 
 ---
 
-## 📌 Learning Outcomes
+## How to use
 
->Through this project, I gained hands-on experience in:
+1. Open the frontend in your browser.
+2. Click attach icon, select a PDF, wait for “processed successfully”.
+3. Type your question, press Enter.
+4. To try another document, just upload a new PDF (it replaces the old one).
 
->Building end-to-end RAG pipelines
+Two main APIs (if you are technical):
 
->Vector similarity search
-
->Prompt engineering with retrieved context
-
->Integrating HuggingFace LLMs
-
->Backend API development with FastAPI
+- `POST /upload` – send PDF file, it gets processed and indexed.
+- `POST /ask` – send `{"query": "your question"}`, get `{"answer": "..."}` back.
 
 ---
 
-## 🤝 Connect with the Developer
+## Limitations (honest note)
 
-Built with precision by **Mohak Talodhikar**.
-
-- **Instagram**: [@mohak_talodhikar](https://www.instagram.com/mohak_talodhikar/)
-- **LinkedIn**: [Mohak Talodhikar](https://www.linkedin.com/in/mohak-talodhikar/)
-- **Github**: [@mohaktalodhikar](https://github.com/mohaktalodhikar)
+- Only 1 PDF at a time – new upload replaces old one.
+- Data is in-memory – restarting backend clears it.
+- Best for short, factual questions. Long answers are capped at ~512 tokens.
+- CPU-based, so large PDFs take some time.
+- No login / no multi-user support yet.
 
 ---
+
+## What I learned from this project
+
+- Building an end-to-end RAG pipeline (load → chunk → embed → retrieve → generate)
+- Semantic search with FAISS and embeddings
+- Prompt design to reduce hallucination (“say if not in context”)
+- Cleaning LLM output (remove repeats and artifacts)
+- Backend development with FastAPI + connecting to a plain JS frontend
+
+---
+
+## Author
+
+Built by **Mohak Talodhikar**
+
+- LinkedIn: [mohak-talodhikar](https://www.linkedin.com/in/mohak-talodhikar/)
+- GitHub: [@mohaktalodhikar](https://github.com/mohaktalodhikar)
+- Instagram: [@mohak_talodhikar](https://www.instagram.com/mohak_talodhikar/)
