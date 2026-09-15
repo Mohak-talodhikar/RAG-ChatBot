@@ -131,8 +131,8 @@ Two main APIs (if you are technical):
 
 ## Limitations (honest note)
 
-- Only 1 PDF at a time – new upload replaces old one.
-- Data is in-memory – restarting backend clears it.
+- Only 1 PDF at a time per conversation.
+- Chat history is saved in SQLite (`chats.db`) and survives restarts.
 - Best for short, factual questions. Long answers are capped at ~512 tokens.
 - CPU-based, so large PDFs take some time.
 - No login / no multi-user support yet.

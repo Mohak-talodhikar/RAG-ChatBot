@@ -1,6 +1,8 @@
 import os
 import re
-from fastapi import FastAPI, UploadFile, File, HTTPException
+import sqlite3
+import json
+from fastapi import FastAPI, UploadFile, File, HTTPException, BackgroundTasks
 import shutil
 from pydantic import BaseModel
 from langchain_community.document_loaders import PyPDFLoader
@@ -66,6 +68,35 @@ Question: {question}
 
 Provide a clear, structured answer:""")
 
+# =========================
+# CHAT HISTORY DATABASE
+# =========================
+
+DB_PATH = "chats.db"
+
+def init_db():
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute('''CREATE TABLE IF NOT EXISTS conversations (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT,
+        pdf_filename TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )''')
+    c.execute('''CREATE TABLE IF NOT EXISTS messages (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        conversation_id INTEGER,
+        role TEXT,  -- 'user' or 'assistant'
+        content TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (conversation_id) REFERENCES conversations(id)
+    )''')
+    conn.commit()
+    conn.close()
+
+init_db()
+
 # Global state for the RAG chain
 qa_chain = None
 
@@ -116,9 +147,83 @@ def clean_response(text):
     
     return cleaned
 
+def save_chat(conversation_id, role, content, pdf_filename=None):
+    """Save a message to the chat history."""
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute("INSERT INTO messages (conversation_id, role, content) VALUES (?, ?, ?)",
+              (conversation_id, role, content))
+    c.execute("UPDATE conversations SET updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+              (conversation_id,))
+    conn.commit()
+    conn.close()
+
+def get_chat_messages(conversation_id):
+    """Get all messages for a conversation."""
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute("SELECT role, content FROM messages WHERE conversation_id = ? ORDER BY created_at ASC", (conversation_id,))
+    messages = c.fetchall()
+    conn.close()
+    return [{"role": msg[0], "content": msg[1]} for msg in messages]
+
+def create_conversation(title, pdf_filename=None):
+    """Create a new conversation and return its id."""
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute("INSERT INTO conversations (title, pdf_filename) VALUES (?, ?)",
+              (title, pdf_filename))
+    conn.commit()
+    conversation_id = c.lastrowid
+    conn.close()
+    return conversation_id
+
+def get_all_conversations():
+    """Get all conversations with their message counts."""
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute("""SELECT c.id, c.title, c.pdf_filename, c.created_at, 
+                 (SELECT COUNT(*) FROM messages m WHERE m.conversation_id = c.id) as msg_count
+                 FROM conversations c ORDER BY c.updated_at DESC""")
+    convos = c.fetchall()
+    conn.close()
+    return [(id, title, pdf_filename, created_at, msg_count) for id, title, pdf_filename, created_at, msg_count in convos]
+
 # =========================
 # API ENDPOINTS
 # =========================
+
+@app.get("/chats")
+def list_chats():
+    """Get all conversations with message counts and last updated time."""
+    conversations = get_all_conversations()
+    return conversations
+
+@app.post("/chats")
+def create_chat():
+    """Create a new conversation."""
+    title = "New Conversation"
+    # The backend already has a default title, but we can extract if provided
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute("INSERT INTO conversations (title) VALUES (?)", (title,))
+    conn.commit()
+    conversation_id = c.lastrowid
+    conn.close()
+    return {"id": conversation_id, "title": title}
+
+@app.get("/chats/{conversation_id}")
+def get_chat(conversation_id: int):
+    """Get a specific conversation with all its messages."""
+    messages = get_chat_messages(conversation_id)
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute("SELECT title, pdf_filename, created_at FROM conversations WHERE id = ?", (conversation_id,))
+    convo = c.fetchone()
+    conn.close()
+    if convo is None:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    return {"conversation": {"id": conversation_id, "title": convo[0], "pdf_filename": convo[1], "created_at": str(convo[2]), "messages": messages}}
 
 # FIX: Removed `async` from def. Heavy CPU tasks and shutil operations 
 # block the async event loop and cause ERR_CONNECTION_RESET.
@@ -166,7 +271,17 @@ def upload_pdf(file: UploadFile = File(...)):
         )
         print("RAG Chain Updated Successfully")
         
-        return {"message": "File uploaded and processed successfully", "filename": file.filename}
+        # Create a new conversation for this PDF
+        conv_id = create_conversation(title=file.filename, pdf_filename=file.filename)
+        save_chat(conv_id, "system", f"PDF uploaded: {file.filename}", pdf_filename=file.filename)
+        
+        conn = sqlite3.connect(DB_PATH)
+        c = conn.cursor()
+        c.execute("UPDATE conversations SET pdf_filename = ? WHERE id = ?", (file.filename, conv_id))
+        conn.commit()
+        conn.close()
+        
+        return {"message": "File uploaded and processed successfully", "filename": file.filename, "conversation_id": conv_id}
         
     except Exception as e:
         print(f"Error processing PDF: {str(e)}")
@@ -178,16 +293,43 @@ def upload_pdf(file: UploadFile = File(...)):
             os.remove(file_path)
 
 @app.post("/ask")
-def ask_question(data: Question):
+def ask_question(data: Question, background_tasks: BackgroundTasks):
     global qa_chain
     if qa_chain is None:
         raise HTTPException(status_code=400, detail="Please wait for the PDF to finish processing before asking questions.")
         
     try:
         print(f"Processing question: {data.query}")
+        
+        # Save user message
+        conn = sqlite3.connect(DB_PATH)
+        c = conn.cursor()
+        c.execute("SELECT id FROM conversations ORDER BY created_at DESC LIMIT 1")
+        row = c.fetchone()
+        conn.close()
+        
+        conversation_id = row[0] if row else None
+        
+        if conversation_id is None:
+            # Create a default conversation if none exists
+            conversation_id = create_conversation(title="New Conversation")
+        
+        save_chat(conversation_id, "user", data.query)
+        
         raw_response = qa_chain.invoke(data.query)
         cleaned_response = clean_response(raw_response)
-        return {"answer": cleaned_response, "raw_length": len(raw_response), "cleaned_length": len(cleaned_response)}
+        
+        # Save assistant message
+        save_chat(conversation_id, "assistant", cleaned_response)
+        
+        # Refresh conversation data for response
+        conn = sqlite3.connect(DB_PATH)
+        c = conn.cursor()
+        c.execute("SELECT updated_at FROM conversations WHERE id = ?", (conversation_id,))
+        updated_at = c.fetchone()[0]
+        conn.close()
+        
+        return {"answer": cleaned_response, "raw_length": len(raw_response), "cleaned_length": len(cleaned_response), "conversation_id": conversation_id, "updated_at": updated_at}
     except Exception as e:
         print(f"LLM Error: {str(e)}")
         raise HTTPException(status_code=500, detail="An error occurred while generating the answer.")

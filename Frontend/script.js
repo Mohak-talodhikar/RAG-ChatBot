@@ -5,53 +5,190 @@ class AIAssistant {
         this.chatHistory = [];
         this.isDarkTheme = false;
         this.isProcessing = false;
+        this.currentConversationId = null;
         this.init();
     }
 
     init() {
         this.setupEventListeners();
         this.loadTheme();
-        this.loadChatHistory();
+        this.loadChats();
         this.focusInput();
     }
 
     setupEventListeners() {
         const questionInput = document.getElementById('question');
         
-        // Auto-resize textarea
         questionInput.addEventListener('input', (e) => {
             this.updateCharCount();
             this.autoResize(e.target);
         });
 
-        // Focus management
         questionInput.addEventListener('focus', () => {
             this.hideWelcomeScreen();
         });
 
-        // Initialize
         this.updateCharCount();
     }
 
-    hideWelcomeScreen() {
-        const welcomeScreen = document.getElementById('welcomeScreen');
-        const chatMessages = document.getElementById('chatMessages');
-        
-        if (welcomeScreen && chatMessages) {
-            welcomeScreen.style.display = 'none';
-            chatMessages.style.display = 'flex';
+    loadTheme() {
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'dark') {
+            this.isDarkTheme = true;
+            document.body.classList.add('dark-theme');
+            document.getElementById('theme-icon').className = 'fas fa-sun';
         }
     }
 
-    showWelcomeScreen() {
-        const welcomeScreen = document.getElementById('welcomeScreen');
-        const chatMessages = document.getElementById('chatMessages');
-        
-        if (welcomeScreen && chatMessages && this.chatHistory.length === 0) {
-            welcomeScreen.style.display = 'flex';
-            chatMessages.style.display = 'none';
+    // ============================
+    // CHAT HISTORY / CONVERSATIONS
+    // ============================
+
+    async loadChats() {
+        try {
+            const response = await fetch('http://127.0.0.1:8000/chats');
+            if (!response.ok) throw new Error('Failed to load chats');
+            const conversations = await response.json();
+            
+            // conversations = [(id, title, pdf_filename, created_at, msg_count), ...]
+            this.renderConvoSidebar(conversations);
+            
+            // Select the most recent conversation, or create a new one if none
+            if (conversations && conversations.length > 0) {
+                // Pick the most recently updated conversation
+                this.currentConversationId = conversations[0][0];  // first = most recent
+                this.loadConversationMessages(this.currentConversationId);
+            } else {
+                this.createNewConversation();
+            }
+        } catch (error) {
+            console.error('Failed to load chats:', error);
+            this.createNewConversation();
         }
     }
+
+    renderConvoSidebar(conversations) {
+        const sidebar = document.getElementById('sidebar');
+        const chatHistory = document.getElementById('chatHistory');
+        
+        // Build conversation list
+        let historyHtml = '';
+        
+        conversations.forEach(([id, title, pdf_filename, created_at, msg_count]) => {
+            // Truncate title if too long
+            const displayTitle = title.length > 30 ? title.substring(0, 30) + '...' : title;
+            const pdfBadge = pdf_filename ? `<span class="badge pdf-badge">PDF: ${pdf_filename}</span>` : '';
+            
+            historyHtml += `
+                <div class="history-item" data-convo-id="${id}" ${this.currentConversationId === id ? 'class="active"' : ''}>
+                    <i class="fas fa-message"></i>
+                    <span>${displayTitle}</span>
+                    ${pdfBadge}
+                    <span class="msg-count">${msg_count || 0} messages</span>
+                </div>
+            `;
+        });
+        
+        chatHistory.innerHTML = historyHtml;
+        
+        // Add click handler for conversation items
+        document.querySelectorAll('.history-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const convoId = parseInt(item.dataset.convoId);
+                this.selectConversation(convoId);
+            });
+        });
+        
+        // Show "start new chat" prompt if no conversations
+        if (conversations.length === 0) {
+            const newChatHtml = `
+                <div class="history-item new-chat" onclick="window.aiAssistant.createNewConversation()">
+                    <i class="fas fa-plus"></i>
+                    <span>New Conversation</span>
+                </div>
+            `;
+            // Insert after existing items if any, or as only item
+            if (historyHtml === '') {
+                chatHistory.innerHTML = newChatHtml;
+            } else {
+                chatHistory.insertAdjacentHTML('beforeend', newChatHtml);
+            }
+        }
+    }
+
+    createNewConversation() {
+        // Create a new conversation on the backend
+        fetch('http://127.0.0.1:8000/chats', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ title: 'New Conversation' })
+        })
+        .then(response => response.json())
+        .then(data => {
+            this.currentConversationId = data.id;
+            this.loadConversationMessages(this.currentConversationId);
+            this.showToast('New conversation created', 'success');
+        })
+        .catch(error => {
+            console.error('Error creating conversation:', error);
+            this.showToast('Error creating conversation', 'error');
+        });
+    }
+
+    selectConversation(convoId) {
+        this.currentConversationId = convoId;
+        this.loadConversationMessages(convoId);
+        
+        // Update active state in sidebar
+        document.querySelectorAll('.history-item').forEach(item => {
+            item.classList.toggle('active', parseInt(item.dataset.convoId) === convoId);
+        });
+    }
+
+    async loadConversationMessages(conversationId) {
+        try {
+            const response = await fetch(`http://127.0.0.1:8000/chats/${conversationId}`);
+            if (!response.ok) throw new Error('Failed to load conversation');
+            const data = await response.json();
+            
+            // data = {"conversation": {"id": ..., "title": ..., "pdf_filename": ..., "created_at": ..., "messages": [{"role": "user", "content": "..."}, ...]}}
+            const messages = data.conversation.messages;
+            
+            // Clear current messages and re-render
+            this.renderMessages(messages);
+            
+            // Show chat area, hide welcome screen if there are messages
+            const welcomeScreen = document.getElementById('welcomeScreen');
+            const chatMessages = document.getElementById('chatMessages');
+            
+            if (messages.length > 0) {
+                welcomeScreen.style.display = 'none';
+                chatMessages.style.display = 'flex';
+            } else {
+                welcomeScreen.style.display = 'flex';
+                chatMessages.style.display = 'none';
+            }
+        } catch (error) {
+            console.error('Failed to load conversation messages:', error);
+            this.showToast('Error loading conversation', 'error');
+        }
+    }
+
+    renderMessages(messages) {
+        const chatMessages = document.getElementById('chatMessages');
+        chatMessages.innerHTML = '';
+        
+        messages.forEach(msg => {
+            this.addMessage(msg.content, msg.role);
+        });
+        
+        // Scroll to bottom
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    // ============================
+    // EXISTING FUNCTIONS (modified)
+    // ============================
 
     async askQuestion() {
         if (this.isProcessing) return;
@@ -96,8 +233,10 @@ class AIAssistant {
             // Add assistant response
             this.addMessage(data.answer || 'I apologize, but I couldn\'t generate a response. Please try rephrasing your question.', 'assistant');
             
-            // Save to history
-            this.saveToHistory(question, data.answer);
+            // Update current conversation ID from response
+            if (data.conversation_id) {
+                this.currentConversationId = data.conversation_id;
+            }
             
         } catch (error) {
             console.error('Error:', error);
@@ -106,6 +245,57 @@ class AIAssistant {
         } finally {
             this.setProcessingState(false);
             this.focusInput();
+        }
+    }
+
+    // Keep saveToHistory/saveChatHistory for backward compatibility but mark as deprecated
+    saveToHistory(question, answer) {
+        // Backend now handles persistence, so we just keep local history for UI reference
+        this.chatHistory.push({
+            question,
+            answer,
+            timestamp: new Date().toISOString()
+        });
+    }
+
+    saveChatHistory() {
+        // Backend handles persistence; localStorage kept for fallback
+        localStorage.setItem('chatHistory', JSON.stringify(this.chatHistory));
+    }
+
+    loadChatHistory() {
+        const saved = localStorage.getItem('chatHistory');
+        if (saved) {
+            try {
+                this.chatHistory = JSON.parse(saved);
+            } catch (e) {
+                console.error('Failed to load chat history:', e);
+                this.chatHistory = [];
+            }
+        }
+    }
+
+    // ============================
+    // EXISTING UI FUNCTIONS
+    // ============================
+
+    hideWelcomeScreen() {
+        const welcomeScreen = document.getElementById('welcomeScreen');
+        const chatMessages = document.getElementById('chatMessages');
+        
+        if (welcomeScreen && chatMessages) {
+            welcomeScreen.style.display = 'none';
+            chatMessages.style.display = 'flex';
+        }
+    }
+
+    showWelcomeScreen() {
+        const welcomeScreen = document.getElementById('welcomeScreen');
+        const chatMessages = document.getElementById('chatMessages');
+        
+        if (welcomeScreen && chatMessages && this.chatHistory.length === 0) {
+            welcomeScreen.style.display = 'flex';
+            chatMessages.style.display = 'none';
         }
     }
 
@@ -212,29 +402,28 @@ class AIAssistant {
         localStorage.setItem('theme', this.isDarkTheme ? 'dark' : 'light');
     }
 
-    loadTheme() {
-        const savedTheme = localStorage.getItem('theme');
-        if (savedTheme === 'dark') {
-            this.isDarkTheme = true;
-            document.body.classList.add('dark-theme');
-            document.getElementById('theme-icon').className = 'fas fa-sun';
-        }
-    }
-
     clearChat() {
-        if (this.chatHistory.length === 0) return;
-        
-        if (confirm('Are you sure you want to clear the chat history?')) {
+        if (this.currentConversationId) {
+            // Ask user confirmation and clear from backend
+            if (confirm('Clear this conversation? This cannot be undone.')) {
+                fetch(`http://127.0.0.1:8000/chats/${this.currentConversationId}`, {
+                    method: 'DELETE'
+                })
+                .then(() => {
+                    this.createNewConversation();
+                    this.showToast('Conversation cleared', 'success');
+                })
+                .catch(err => {
+                    console.error('Error clearing conversation:', err);
+                    this.showToast('Error clearing conversation', 'error');
+                });
+            }
+        } else {
             this.chatHistory = [];
             this.saveChatHistory();
-            
-            // Clear messages
             const chatMessages = document.getElementById('chatMessages');
             chatMessages.innerHTML = '';
-            
-            // Show welcome screen
             this.showWelcomeScreen();
-            
             this.showToast('Chat history cleared', 'success');
         }
     }
@@ -284,6 +473,12 @@ class AIAssistant {
             const data = await response.json();
             this.showToast(data.message || 'PDF processed successfully!', 'success');
             
+            // Switch to the new conversation created by the PDF upload
+            if (data.conversation_id) {
+                this.currentConversationId = data.conversation_id;
+                this.loadConversationMessages(data.conversation_id);
+            }
+            
             // Add a system message to the chat
             this.addMessage(`System: Uploaded "${file.name}" successfully. You can now ask questions about it.`, 'assistant');
             this.hideWelcomeScreen();
@@ -293,34 +488,7 @@ class AIAssistant {
             this.showToast(error.message || 'Error uploading file', 'error');
         } finally {
             this.setProcessingState(false);
-            // Reset input
             event.target.value = '';
-        }
-    }
-
-    saveToHistory(question, answer) {
-        this.chatHistory.push({
-            question,
-            answer,
-            timestamp: new Date().toISOString()
-        });
-        this.saveChatHistory();
-    }
-
-    saveChatHistory() {
-        localStorage.setItem('chatHistory', JSON.stringify(this.chatHistory));
-    }
-
-    loadChatHistory() {
-        const saved = localStorage.getItem('chatHistory');
-        if (saved) {
-            try {
-                this.chatHistory = JSON.parse(saved);
-                // Optionally restore previous chat messages
-            } catch (e) {
-                console.error('Failed to load chat history:', e);
-                this.chatHistory = [];
-            }
         }
     }
 
