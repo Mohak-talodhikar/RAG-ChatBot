@@ -1,12 +1,19 @@
+<div align="center">
+
+RAG Chatbot – Ask Questions From Your PDFs
+
+
+
+Upload a PDF, ask questions in plain English, and get answers based on your document.
+
+
+
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 
-# RAG Chatbot – Ask Questions From Your PDFs
-
-**In simple words:** Upload any PDF, ask questions in plain English, and get answers taken only from that PDF — not made up by AI.
-
-This happens using **RAG (Retrieval-Augmented Generation)**. RAG means the AI first *finds* the relevant lines from your document, then *writes* the answer using only those lines. This reduces wrong / made-up answers.
-
+</div>
 ---
+
+This happens using RAG (Retrieval-Augmented Generation). RAG means the AI first finds the relevant lines from your document, then writes the answer using only those lines. This reduces wrong / made-up answers.
 
 ## What can you do with it?
 
