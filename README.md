@@ -3,6 +3,9 @@
 <p align="center">
   Upload a PDF, ask questions in plain English, and get answers based on your document.
 </p>
+
+![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
+
 ---
 
 This happens using RAG (Retrieval-Augmented Generation). RAG means the AI first finds the relevant lines from your document, then writes the answer using only those lines. This reduces wrong / made-up answers.
