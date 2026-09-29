@@ -5,9 +5,11 @@
     </marker>
   </defs>
 
-  <text x="550" y="35" text-anchor="middle" font-family="'Segoe UI', Arial, sans-serif" font-size="22" font-weight="bold" fill="#0f172a">RAG Chatbot — Architecture</text>
+  <rect x="50" y="10" width="1000" height="60" rx="10" fill="#0f172a"/>
 
-  <text x="550" y="60" text-anchor="middle" font-family="'Segoe UI', Arial, sans-serif" font-size="14" fill="#64748b">How data flows through the system</text>
+  <text x="550" y="35" text-anchor="middle" font-family="'Segoe UI', Arial, sans-serif" font-size="22" font-weight="bold" fill="#ffffff">RAG Chatbot — Architecture</text>
+
+  <text x="550" y="60" text-anchor="middle" font-family="'Segoe UI', Arial, sans-serif" font-size="14" fill="#94a3b8">How data flows through the system</text>
 
   <line x1="50" y1="80" x2="1050" y2="80" stroke="#e2e8f0" stroke-width="1"/>
 
