@@ -97,7 +97,7 @@ python -m http.server 3000
 
 | Layer | Technology |
 |---|---|
-| Backend | Python, FastAPI |
+| Backend | Python, FastAPI, Uvicorn |
 | AI Pipeline | LangChain (LCEL chains) |
 | Vector Search | FAISS (faiss-cpu) |
 | Embeddings | `sentence-transformers/all-MiniLM-L6-v2` |
