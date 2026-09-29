@@ -44,37 +44,7 @@ Imagine you upload a company report and ask: *"What is our revenue?"*
 
 **Step 4 — Answer.** Those 3 chunks + your question are handed to `google/flan-t5-small`, a small instruction-tuned AI model, which writes a clean, focused answer — grounded in your document.
 
-```mermaid
-flowchart LR
-    subgraph You
-        Q["Your Question"]
-    end
-
-    subgraph Frontend["Chat UI — Port 3000"]
-        UI["HTML / CSS / JS"]
-    end
-
-    subgraph Backend["FastAPI Backend — Port 8000"]
-        direction TB
-        UP["/upload"]
-        ASK["/ask"]
-        SPLIT["Text Splitter\n1000 chars / 200 overlap"]
-        EMB["Embeddings\nMiniLM-L6-v2"]
-        FAISS[("FAISS\nVector Store")]
-        PROMPT["Prompt Template"]
-        LLM["FLAN-T5-small"]
-        CLEAN["Clean Response"]
-    end
-
-    DB[("SQLite\nChat History")]
-
-    UI -->|PDF file| UP
-    UP --> SPLIT --> EMB --> FAISS
-    Q --> UI -->|query| ASK
-    ASK --> FAISS --> PROMPT --> LLM --> CLEAN --> UI
-    UP -.->|save| DB
-    ASK -.->|save| DB
-```
+<img src="architecture.svg" alt="RAG Chatbot Architecture Diagram" width="1200"/>
 
 ---
 
@@ -127,7 +97,7 @@ python -m http.server 3000
 
 | Layer | Technology |
 |---|---|
-| Backend | Python, FastAPI, Uvicorn |
+| Backend | Python, FastAPI |
 | AI Pipeline | LangChain (LCEL chains) |
 | Vector Search | FAISS (faiss-cpu) |
 | Embeddings | `sentence-transformers/all-MiniLM-L6-v2` |
