@@ -225,6 +225,21 @@ def get_chat(conversation_id: int):
         raise HTTPException(status_code=404, detail="Conversation not found")
     return {"conversation": {"id": conversation_id, "title": convo[0], "pdf_filename": convo[1], "created_at": str(convo[2]), "messages": messages}}
 
+@app.delete("/chats/{conversation_id}")
+def delete_chat(conversation_id: int):
+    """Delete a conversation and all of its messages."""
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute("SELECT id FROM conversations WHERE id = ?", (conversation_id,))
+    if c.fetchone() is None:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    c.execute("DELETE FROM messages WHERE conversation_id = ?", (conversation_id,))
+    c.execute("DELETE FROM conversations WHERE id = ?", (conversation_id,))
+    conn.commit()
+    conn.close()
+    return {"ok": True, "id": conversation_id}
+
 # FIX: Removed `async` from def. Heavy CPU tasks and shutil operations 
 # block the async event loop and cause ERR_CONNECTION_RESET.
 @app.post("/upload")
@@ -272,7 +287,7 @@ def upload_pdf(file: UploadFile = File(...)):
         print("RAG Chain Updated Successfully")
         
         # Create a new conversation for this PDF
-        conv_id = create_conversation(title=file.filename, pdf_filename=file.filename)
+        conv_id = create_conversation(title="New Conversation", pdf_filename=file.filename)
         save_chat(conv_id, "system", f"PDF uploaded: {file.filename}", pdf_filename=file.filename)
         
         conn = sqlite3.connect(DB_PATH)

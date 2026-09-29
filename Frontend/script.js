@@ -46,7 +46,7 @@ class AIAssistant {
 
     async loadChats() {
         try {
-            const response = await fetch('http://127.0.0.1:8000/chats');
+            const response = await fetch('http://127.0.0.1:8000/chats', { cache: 'no-store' });
             if (!response.ok) throw new Error('Failed to load chats');
             const conversations = await response.json();
             
@@ -77,13 +77,11 @@ class AIAssistant {
         conversations.forEach(([id, title, pdf_filename, created_at, msg_count]) => {
             // Truncate title if too long
             const displayTitle = title.length > 30 ? title.substring(0, 30) + '...' : title;
-            const pdfBadge = pdf_filename ? `<span class="badge pdf-badge">PDF: ${pdf_filename}</span>` : '';
             
             historyHtml += `
                 <div class="history-item" data-convo-id="${id}" ${this.currentConversationId === id ? 'class="active"' : ''}>
                     <i class="fas fa-message"></i>
                     <span>${displayTitle}</span>
-                    ${pdfBadge}
                     <span class="msg-count">${msg_count || 0} messages</span>
                 </div>
             `;
@@ -179,6 +177,7 @@ class AIAssistant {
         chatMessages.innerHTML = '';
         
         messages.forEach(msg => {
+            if (msg.role === 'system') return;
             this.addMessage(msg.content, msg.role);
         });
         
@@ -409,9 +408,12 @@ class AIAssistant {
                 fetch(`http://127.0.0.1:8000/chats/${this.currentConversationId}`, {
                     method: 'DELETE'
                 })
-                .then(() => {
-                    this.createNewConversation();
+                .then(response => {
+                    if (!response.ok) throw new Error('Failed to delete conversation');
+                    this.currentConversationId = null;
                     this.showToast('Conversation cleared', 'success');
+                    // Refresh sidebar (auto-creates a new conversation if none remain)
+                    this.loadChats();
                 })
                 .catch(err => {
                     console.error('Error clearing conversation:', err);
