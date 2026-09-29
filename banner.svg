@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="650" viewBox="0 0 1280 650">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0f172a"/>
+      <stop offset="50%" style="stop-color:#1e1b4b"/>
+      <stop offset="100%" style="stop-color:#0f172a"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#2563eb"/>
+      <stop offset="100%" style="stop-color:#7c3aed"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="8" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect width="1280" height="650" fill="url(#bg)"/>
+
+  <circle cx="150" cy="100" r="180" fill="#2563eb" opacity="0.08"/>
+  <circle cx="1130" cy="550" r="220" fill="#7c3aed" opacity="0.08"/>
+  <circle cx="640" cy="325" r="300" fill="#06b6d4" opacity="0.04"/>
+
+  <g opacity="0.15" stroke="#64748b" stroke-width="1" fill="none">
+    <path d="M100 500 L300 400 L500 450 L700 350 L900 400 L1100 300"/>
+    <path d="M100 520 L300 420 L500 470 L700 370 L900 420 L1100 320"/>
+  </g>
+
+  <g transform="translate(540, 180)">
+    <rect x="0" y="0" width="48" height="60" rx="6" fill="none" stroke="url(#accent)" stroke-width="2.5"/>
+    <line x1="10" y1="15" x2="38" y2="15" stroke="#94a3b8" stroke-width="2" stroke-linecap="round"/>
+    <line x1="10" y1="25" x2="38" y2="25" stroke="#94a3b8" stroke-width="2" stroke-linecap="round"/>
+    <line x1="10" y1="35" x2="30" y2="35" stroke="#94a3b8" stroke-width="2" stroke-linecap="round"/>
+    <path d="M34 44 L40 52 L32 50 Z" fill="url(#accent)"/>
+  </g>
+
+  <g transform="translate(660, 160)">
+    <rect x="0" y="0" width="80" height="56" rx="8" fill="none" stroke="#475569" stroke-width="2"/>
+    <line x1="12" y1="16" x2="68" y2="16" stroke="#64748b" stroke-width="2" stroke-linecap="round"/>
+    <line x1="12" y1="28" x2="56" y2="28" stroke="#64748b" stroke-width="2" stroke-linecap="round"/>
+    <line x1="12" y1="40" x2="62" y2="40" stroke="#64748b" stroke-width="2" stroke-linecap="round"/>
+    <circle cx="66" cy="46" r="8" fill="none" stroke="url(#accent)" stroke-width="2"/>
+    <line x1="72" y1="52" x2="78" y2="58" stroke="url(#accent)" stroke-width="2.5" stroke-linecap="round"/>
+  </g>
+
+  <g filter="url(#glow)">
+    <text x="640" y="340" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="72" font-weight="bold" fill="#f8fafc" letter-spacing="2">RAG Chatbot</text>
+  </g>
+
+  <text x="640" y="400" text-anchor="middle" font-family="'Segoe UI', Arial, sans-serif" font-size="26" fill="#94a3b8" letter-spacing="1">Ask Questions From Your PDFs</text>
+
+  <rect x="540" y="430" width="200" height="3" rx="1.5" fill="url(#accent)"/>
+
+  <text x="640" y="480" text-anchor="middle" font-family="'Segoe UI', Arial, sans-serif" font-size="16" fill="#64748b">PDF Understanding &#8226; Semantic Search &#8226; Local LLM &#8226; No API Keys</text>
+
+  <g transform="translate(490, 530)">
+    <rect x="0" y="0" width="100" height="36" rx="18" fill="#2563eb" opacity="0.15"/>
+    <text x="50" y="24" text-anchor="middle" font-family="'Segoe UI', Arial, sans-serif" font-size="14" fill="#60a5fa">FastAPI</text>
+  </g>
+  <g transform="translate(610, 530)">
+    <rect x="0" y="0" width="100" height="36" rx="18" fill="#7c3aed" opacity="0.15"/>
+    <text x="50" y="24" text-anchor="middle" font-family="'Segoe UI', Arial, sans-serif" font-size="14" fill="#a78bfa">LangChain</text>
+  </g>
+  <g transform="translate(730, 530)">
+    <rect x="0" y="0" width="100" height="36" rx="18" fill="#06b6d4" opacity="0.15"/>
+    <text x="50" y="24" text-anchor="middle" font-family="'Segoe UI', Arial, sans-serif" font-size="14" fill="#22d3ee">FAISS</text>
+  </g>
+  <g transform="translate(850, 530)">
+    <rect x="0" y="0" width="100" height="36" rx="18" fill="#10b981" opacity="0.15"/>
+    <text x="50" y="24" text-anchor="middle" font-family="'Segoe UI', Arial, sans-serif" font-size="14" fill="#34d399">FLAN-T5</text>
+  </g>
+</svg>

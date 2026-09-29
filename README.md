@@ -1,158 +1,157 @@
-![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
+<div align="center">
 
-# RAG Chatbot – Ask Questions From Your PDFs
+<img src="banner.svg" alt="RAG Chatbot Banner" width="1280"/>
 
-**In simple words:** Upload any PDF, ask questions in plain English, and get answers based only on the content of that PDF.
+# RAG Chatbot
 
-This happens using **RAG (Retrieval-Augmented Generation)**. RAG means the AI first *finds* the relevant lines from your document, then *writes* the answer using only those lines. This reduces wrong / made-up answers.
+**Ask Questions From Your PDFs**
 
----
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-009688.svg)](https://fastapi.tiangolo.com/)
+[![HuggingFace](https://img.shields.io/badge/HuggingFace-Models-FF9D00.svg)](https://huggingface.co/)
+[![CPU Only](https://img.shields.io/badge/Runs%20on-CPU-brightgreen.svg)](https://github.com/Mohak-talodhikar/RAG-ChatBot)
 
-## What can you do with it?
+[API Docs](http://127.0.0.1:8000/docs) &bull; [Report Issue](https://github.com/Mohak-talodhikar/RAG-ChatBot/issues) &bull; [LinkedIn](https://www.linkedin.com/in/mohak-talodhikar/)
 
-1. Upload a PDF (resume, report, notes, paper, manual).
-2. Ask a question like “Summarize the key findings” or “What is the main topic?”
-3. Get a short, focused answer based only on that PDF.
-
-No API key needed. Everything runs locally on your machine.
-
-**Example:**
-
-> PDF uploaded: `internship-report.pdf`
-> You ask: “What are the important concepts?”
-> Bot answers: from the report content only. If the answer is not in the PDF, it says so clearly instead of guessing.
+</div>
 
 ---
 
-## How it works (in 4 steps)
+## The Problem
 
-1. **Read PDF** – Extracts text and splits it into small chunks (1000 chars with 200 overlap so context is not lost).
-2. **Understand meaning** – Converts each chunk into a number (embedding) that captures its meaning.
-3. **Find relevant parts** – When you ask a question, finds the top 3 most similar chunks using FAISS (fast similarity search).
-4. **Write answer** – Gives those 3 chunks + your question to a small AI model (FLAN-T5) which writes the final answer.
+You have a 200-page report. You need **one answer**. Reading it all takes 3 hours. Asking ChatGPT means uploading your private file to the cloud — and hoping it doesn't make things up.
 
-```
-PDF → Chunks → Embeddings → FAISS → Top 3 chunks + Question → FLAN-T5 → Answer
-```
+There has to be a better way.
 
----
+## The Hero
 
-## Key Features
+**RAG Chatbot** reads your PDF **locally** and answers using **only what's inside it**. No API keys. No cloud. No made-up answers. If the answer isn't in your document, it says so — instead of guessing.
 
-- PDF upload and automatic processing
-- Answers grounded in your document, not AI memory
-- Says “not found in document” instead of hallucinating
-- Simple chat UI with light/dark mode, chat history, and file attach
-- Runs fully offline with free, open-source models
-- FastAPI backend with auto docs at `/docs`
+> **RAG** = Retrieval-Augmented Generation. In plain words: the AI first *finds* the right lines from your document, then *writes* the answer using only those lines.
 
 ---
 
-## Tech Stack
+## How the Magic Happens
 
-| What it does | Tool used |
-|---|---|
-| Backend API | Python, FastAPI, Uvicorn |
-| AI flow | LangChain |
-| Search database | FAISS (in-memory vector search) |
-| Understands text meaning | `sentence-transformers/all-MiniLM-L6-v2` |
-| Writes answers | `google/flan-t5-small` via HuggingFace |
-| Reads PDFs | PyPDF |
-| Frontend | HTML, CSS, JavaScript (no build step) |
+Imagine you upload a company report and ask: *"What is our revenue?"*
 
-Why these models? Both are small, free, and run on CPU. No GPU or paid API needed. Good for learning and demos.
+**Step 1 — Read.** The PDF is extracted and split into small meaningful chunks (1000 characters each, with 200-character overlap so no context is lost at the boundaries).
 
----
+**Step 2 — Understand.** Each chunk is converted into a list of numbers (an *embedding*) that captures its meaning — using `sentence-transformers/all-MiniLM-L6-v2`.
 
-## Project Structure
+**Step 3 — Find.** Your question is converted the same way, then FAISS (a fast similarity search library) hunts down the **top 3 most relevant chunks** in milliseconds.
 
-```
-RAG-ChatBot/
-├── Backend/
-│   ├── app.py            # API: /upload PDF, /ask question
-│   └── requirements.txt  # Python dependencies
-├── Frontend/
-│   ├── index.html        # Chat UI
-│   ├── script.js         # Upload + chat logic
-│   └── styles.css        # Styling
-├── README.md
-└── LICENSE
+**Step 4 — Answer.** Those 3 chunks + your question are handed to `google/flan-t5-small`, a small instruction-tuned AI model, which writes a clean, focused answer — grounded in your document.
+
+```mermaid
+flowchart LR
+    subgraph You
+        Q["Your Question"]
+    end
+
+    subgraph Frontend["Chat UI — Port 3000"]
+        UI["HTML / CSS / JS"]
+    end
+
+    subgraph Backend["FastAPI Backend — Port 8000"]
+        direction TB
+        UP["/upload"]
+        ASK["/ask"]
+        SPLIT["Text Splitter\n1000 chars / 200 overlap"]
+        EMB["Embeddings\nMiniLM-L6-v2"]
+        FAISS[("FAISS\nVector Store")]
+        PROMPT["Prompt Template"]
+        LLM["FLAN-T5-small"]
+        CLEAN["Clean Response"]
+    end
+
+    DB[("SQLite\nChat History")]
+
+    UI -->|PDF file| UP
+    UP --> SPLIT --> EMB --> FAISS
+    Q --> UI -->|query| ASK
+    ASK --> FAISS --> PROMPT --> LLM --> CLEAN --> UI
+    UP -.->|save| DB
+    ASK -.->|save| DB
 ```
 
-You don’t need to open the code to use it. This structure is only if you want to explore or modify it.
+---
+
+## What It Can Do
+
+- **PDF upload** — drop in any PDF, it gets processed and indexed automatically
+- **Grounded answers** — every answer comes from your document, not the AI's memory
+- **Honest about gaps** — if the answer isn't in the PDF, it says so clearly
+- **Chat history** — conversations are stored in SQLite and survive server restarts
+- **Beautiful UI** — dark mode, typing indicators, suggested questions, keyboard shortcuts
+- **Runs 100% offline** — free open-source models, no GPU, no internet needed after setup
 
 ---
 
-## How to run locally
-
-**You need:** Python 3.10+, a browser.
+## Try It in 2 Minutes
 
 **1. Clone and install:**
-
 ```bash
 git clone https://github.com/Mohak-talodhikar/RAG-ChatBot.git
 cd RAG-ChatBot
 pip install -r Backend/requirements.txt
 ```
 
-**2. Start backend:**
-
+**2. Start the backend:**
 ```bash
 cd Backend
 uvicorn app:app --reload
 ```
 
-Open: `http://127.0.0.1:8000/docs` to see the API.
-
-**3. Start frontend (new terminal):**
-
+**3. Start the frontend (new terminal):**
 ```bash
 cd Frontend
 python -m http.server 3000
 ```
 
-Open: `http://localhost:3000`
+**4. Open** [`http://localhost:3000`](http://localhost:3000) — upload a PDF, ask a question.
 
 ---
 
-## How to use
+## The Honest Limitations
 
-1. Open the frontend in your browser.
-2. Click attach icon, select a PDF, wait for “processed successfully”.
-3. Type your question, press Enter.
-4. To try another document, just upload a new PDF (it replaces the old one).
-
-Two main APIs (if you are technical):
-
-- `POST /upload` – send PDF file, it gets processed and indexed.
-- `POST /ask` – send `{"query": "your question"}`, get `{"answer": "..."}` back.
+- **One PDF at a time** — uploading a new PDF starts a new conversation (old chats stay saved)
+- **CPU inference** — answers take a few seconds; a GPU would make it faster
+- **512 token cap** — answers are short and focused by design
+- **Small model** — FLAN-T5-small is fast and free, but occasionally mixes up specific facts; a bigger model fixes this
 
 ---
 
-## Limitations (honest note)
+## The Tech Behind the Story
 
-- Only 1 PDF at a time per conversation.
-- Chat history is saved in SQLite (`chats.db`) and survives restarts.
-- Best for short, factual questions. Long answers are capped at ~512 tokens.
-- CPU-based, so large PDFs take some time.
-- No login / no multi-user support yet.
-
----
-
-## What I learned from this project
-
-- Building an end-to-end RAG pipeline (load → chunk → embed → retrieve → generate)
-- Semantic search with FAISS and embeddings
-- Prompt design to reduce hallucination (“say if not in context”)
-- Cleaning LLM output (remove repeats and artifacts)
-- Backend development with FastAPI + connecting to a plain JS frontend
+| Layer | Technology |
+|---|---|
+| Backend | Python, FastAPI, Uvicorn |
+| AI Pipeline | LangChain (LCEL chains) |
+| Vector Search | FAISS (faiss-cpu) |
+| Embeddings | `sentence-transformers/all-MiniLM-L6-v2` |
+| LLM | `google/flan-t5-small` (HuggingFace) |
+| PDF Reading | PyPDF |
+| Chat Storage | SQLite (`chats.db`) |
+| Frontend | Vanilla HTML, CSS, JavaScript |
 
 ---
 
-## Author
+## The End (For Now)
 
-**Mohak Talodhikar**
+Built with curiosity by **[Mohak Talodhikar](https://www.linkedin.com/in/mohak-talodhikar/)** — a fresher who wanted to understand RAG from the ground up, and ended up building a complete pipeline: document processing, vector search, prompt engineering, LLM inference, and a chat UI.
 
-- [LinkedIn](https://www.linkedin.com/in/mohak-talodhikar/)
-- [GitHub](https://github.com/mohaktalodhikar)
-- [Instagram](https://www.instagram.com/mohak_talodhikar/)
+If this project helped you, **star the repo** — it tells me to keep building.
+
+[![GitHub stars](https://img.shields.io/github/stars/Mohak-talodhikar/RAG-ChatBot?style=social)](https://github.com/Mohak-talodhikar/RAG-ChatBot)
+
+---
+
+<div align="center">
+
+[LinkedIn](https://www.linkedin.com/in/mohak-talodhikar/) &bull; [GitHub](https://github.com/mohaktalodhikar) &bull; [Instagram](https://www.instagram.com/mohak_talodhikar/)
+
+Licensed under the [MIT License](LICENSE).
+
+</div>
