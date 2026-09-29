@@ -44,20 +44,19 @@ Imagine you upload a company report and ask: *"What is our revenue?"*
 
 **Step 4 — Answer.** Those 3 chunks + your question are handed to `google/flan-t5-small`, a small instruction-tuned AI model, which writes a clean, focused answer — grounded in your document.
 
+*Blue = upload path builds the RAG chain · Green = query path answers questions · Grey = chat history stored in SQLite*
+
 ```mermaid
-flowchart TB
-    subgraph UPLOAD["UPLOAD PATH — POST /upload builds the RAG chain"]
-        direction LR
+flowchart LR
+    subgraph UPLOAD["UPLOAD PATH (POST /upload)"]
         PDF["PDF File"] --> Loader["PyPDFLoader"] --> Splitter["Text Splitter<br/>1000 / 200 overlap"] --> Embed["Embeddings<br/>MiniLM-L6-v2"] --> FAISS["FAISS"] --> Ret1["Retriever<br/>k = 3"] --> Chain1["qa_chain"]
     end
 
-    subgraph QUERY["QUERY PATH — POST /ask uses the RAG chain"]
-        direction LR
+    subgraph QUERY["QUERY PATH (POST /ask)"]
         Q["Question"] --> Chain2["qa_chain"] --> Ret2["Retriever"] --> Format["format_docs"] --> Prompt["Prompt"] --> LLM["FLAN-T5 small"] --> Clean["clean_response<br/>dedup + strip"] --> Answer["Answer"]
     end
 
-    subgraph STORAGE["STORAGE — persists chat history across restarts"]
-        direction LR
+    subgraph STORAGE["STORAGE"]
         DB[("SQLite chats.db")] --> Convos["conversations<br/>id, title, pdf"] --> Msgs["messages<br/>role, content"]
     end
 
