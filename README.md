@@ -44,7 +44,7 @@ Imagine you upload a company report and ask: *"What is our revenue?"*
 
 **Step 4 — Answer.** Those 3 chunks + your question are handed to `google/flan-t5-small`, a small instruction-tuned AI model, which writes a clean, focused answer — grounded in your document.
 
-<img src="architecture.svg" alt="RAG Chatbot Architecture Diagram" width="1200"/>
+<img src="architecture.svg" alt="RAG Chatbot Architecture Diagram" width="1100"/>
 
 ---
 
