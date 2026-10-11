@@ -1,7 +1,6 @@
 import os
 import re
 import sqlite3
-import json
 from fastapi import FastAPI, UploadFile, File, HTTPException, BackgroundTasks
 import shutil
 from pydantic import BaseModel

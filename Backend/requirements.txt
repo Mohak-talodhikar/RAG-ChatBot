@@ -2,9 +2,9 @@ fastapi
 uvicorn
 pydantic
 langchain-community
-langchain
 langchain-core
 langchain-huggingface
+langchain-text-splitters
 faiss-cpu
 transformers
 sentence-transformers
